@@ -1,0 +1,16 @@
+import(mixOmics)
+export(
+bootsPLS,
+compile.bootsPLS.object,
+spls.hybrid,
+CI.prediction,
+component.selection,
+variable.selection,
+fit.model, 
+prediction)
+
+S3method(plot, variable.selection)
+S3method(plot, component.selection)
+S3method(plot, bootsPLS)
+
+
