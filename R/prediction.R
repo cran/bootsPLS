@@ -106,10 +106,10 @@ prediction=function(object,X,Y,keepX.constraint,ncomp,X.test,
     {
         #check entry
         check=Check.entry.X(X.test)
-        X.test=check$X
+        X.test.temp=check$X
         
         # prep X.test
-        match.indice=match(colnames(data),colnames(X.test))
+        match.indice=match(colnames(data),colnames(X.test.temp))
         missing.genes=sum(is.na(match.indice))
         if(sum(is.na(match.indice))>0)
         {
@@ -120,12 +120,12 @@ prediction=function(object,X,Y,keepX.constraint,ncomp,X.test,
             warning("All genes are missing from the signature, prediction shouldn't be trusted")
         }
         
-        X.test=X.test[,match.indice,drop=FALSE]
-        X.test[is.na(X.test)]=0
+        X.test.temp=X.test.temp[,match.indice,drop=FALSE]
+        X.test.temp[is.na(X.test.temp)]=0
 
 
         # make the prediction
-        out.temp=prediction.formula(X.test=X.test,ncomp=ncomp,Y.scaled=Y.mat.scale,unmap.Y=Y.mat,
+        out.temp=prediction.formula(X.test=X.test.temp,ncomp=ncomp,Y.scaled=Y.mat.scale,unmap.Y=Y.mat,
         variates.X=tvariates,uloadings=uloadings,CH=CH,means.X=means.X,means.Y=means.Y,sigma.X=sigma.X,sigma.Y=sigma.Y)
         
         #record the result
@@ -135,7 +135,7 @@ prediction=function(object,X,Y,keepX.constraint,ncomp,X.test,
         
 
          
-         out$X.test=X.test
+         out$X.test=X.test.temp
          out$predicted.test=predicted.test
          out$Y.hat.test=Y.hat.test
          out$missing.genes=missing.genes

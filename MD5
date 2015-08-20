@@ -1,5 +1,5 @@
-cae668a093a742f4517334ddaa34e76c *DESCRIPTION
-cdc4604bc5de7243765fa46e57174db7 *NAMESPACE
+5a0e76474e6cfe3ccb80bca56b7ef671 *DESCRIPTION
+df0d9e620e43fa109e7321287216b450 *NAMESPACE
 d41d8cd98f00b204e9800998ecf8427e *NEWS
 ce561bf3f08ee3ff6589ecb12d22073f *R/CI.prediction.R
 c878d4d00d69c64c1aab51198ef79483 *R/CV.spls.constraint.R
@@ -10,10 +10,10 @@ c878d4d00d69c64c1aab51198ef79483 *R/CV.spls.constraint.R
 e1089f1f5b219b7df170f04e5a9d6ab8 *R/helpers.R
 6333daa92d9ef6a6640f99331f6f033d *R/plot.bootsPLS.R
 4a9f79389dd5762d03732f37973c4ce2 *R/plot.selection.comp.variable.R
-6eaf1164de18f42afee3bc63e08984e0 *R/prediction.R
+229656b9aa794ad28fecbea67bad162e *R/prediction.R
 e3acbe1382088a0a2d6b492df0085aed *R/routine.R
 54afc031613da903ab97108abb9f5c09 *R/selection.R
-66cc5034509a3d91729579bd7200b413 *R/spls.hybrid.R
+a209b57e4502ec9f6c7fdf24412d826e *R/spls.hybrid.R
 8f5346da17f837b9abba66b9041b4c44 *data/MSC.rda
 9b9a7a36f1cdc8d71720a8d31d38bbff *man/CI.prediction.Rd
 f51011bbc18d7a4851a379c36dad2a68 *man/MSC.Rd

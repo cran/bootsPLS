@@ -32,6 +32,17 @@ spls.hybrid <-function(X,
                 near.zero.var = FALSE)
 {
     
+    #-- validation des arguments --#
+    if (length(dim(X)) != 2)
+    stop("'X' must be a numeric matrix.")
+    
+    X = as.matrix(X)
+    Y = as.matrix(Y)
+    
+    if (!is.numeric(X) || !is.numeric(Y))
+    stop("'X' and/or 'Y' must be a numeric matrix.")
+    
+    
     if(missing(keepX.constraint))
     {
         if(missing(keepX))
@@ -78,17 +89,17 @@ spls.hybrid <-function(X,
     ind.names=check$ind.names
     
     # match keepX.constraint and the colnames of X in order for keepX.constraint to be a list of character
-    if(length(keepX.constraint))
+    if(length(keepX.constraint)>0)
     {
         X.indice=X[,unlist(keepX.constraint),drop=FALSE]
         keepX.constraint=relist(colnames(X.indice),skeleton=keepX.constraint)
     }
     
     # same for keepY.constraint
-    if(length(keepY.constraint))
+    if(length(keepY.constraint)>0)
     {
-        Y.indice=Y[,unlist(keepX.constraint),drop=FALSE]
-        keepX.constraint=relist(colnames(X.indice),skeleton=keepX.constraint)
+        Y.indice=Y[,unlist(keepY.constraint),drop=FALSE]
+        keepY.constraint=relist(colnames(Y.indice),skeleton=keepY.constraint)
     }
     
     if(near.zero.var == TRUE)

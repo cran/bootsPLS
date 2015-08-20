@@ -13,4 +13,8 @@ S3method(plot, variable.selection)
 S3method(plot, component.selection)
 S3method(plot, bootsPLS)
 
+importFrom("graphics", "abline", "axis", "legend", "par", "plot",
+             "points", "text")
+importFrom("stats", "coefficients", "lm", "quantile", "t.test")
+importFrom("utils", "relist")
 
