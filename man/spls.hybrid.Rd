@@ -39,7 +39,7 @@ one of \code{"regression"}, \code{"canonical"}, \code{"invariant"} or \code{"cla
 }
 
 
-\details{The spls.hybrid allows you to compute a constraint spls on the first components and a spls on the last components. This is convenient when tuning the number of variables to keep on a single component while keeping specific variables on each of the previous component. Note that the only condition on \code{keepX.constraint} and \code{keepX} is that the sum of both length is ncomp; likewise for the ones relative to Y.}
+\details{The \code{spls.hybrid} function allows you to compute a constraint spls on the first components and a spls on the last components. Note that the only condition on \code{keepX.constraint} and \code{keepX} is that the sum of both length is ncomp; likewise for the ones relative to Y.}
 
 \value{A 'spls.hybrid' object is returned. The object is a list
 that contains the following components:
@@ -61,7 +61,7 @@ that contains the following components:
 
 
 \references{
-Rohart \emph{et al.} (2015). A Molecular Classification of Human Mesenchymal Stromal Cells\cr
+Rohart \emph{et al.} (2016). A Molecular Classification of Human Mesenchymal Stromal Cells. PeerJ, DOI 10.7717/peerj.1845\cr
 }
 
 \examples{
@@ -79,6 +79,6 @@ p=ncol(X)
 keepX.constraint=list(sample(1:p,7),sample(1:p,15))
 fit=spls.hybrid(X,Y=Y.mat,ncomp=4,keepX.constraint=keepX.constraint,keepX=c(5,10))
 
-plotIndiv(fit,ind.names=FALSE,col=as.numeric(Y))
+plotIndiv(fit,ind.names=FALSE)
 }
 }

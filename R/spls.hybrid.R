@@ -151,8 +151,8 @@ spls.hybrid <-function(X,
         
     }
     
-    keepX.constraint=match.keepX.constraint(X,names.remove.X,keepX.constraint)
-    keepY.constraint=match.keepX.constraint(Y,names.remove.Y,keepY.constraint)
+    keepX.constraint=match.signature(X,names.remove.X,keepX.constraint)
+    keepY.constraint=match.signature(Y,names.remove.Y,keepY.constraint)
     
     # we need numbers in keepX.constraint from now on
     keepX.constraint= lapply(keepX.constraint,function(x){match(x,colnames(X))})
@@ -401,7 +401,7 @@ spls.hybrid <-function(X,
     mat.e = mat.e,
     variates = list(X = mat.t, Y = mat.u),
     loadings = list(X = mat.a, Y = mat.b),
-    names = list(X = X.names, Y = Y.names, indiv = ind.names),
+    names = list(samples = ind.names, colnames=X.names, blocks=c("X","Y"), Y = Y.names),
     tol = tol,
     max.iter = max.iter,iter=iter
     )
@@ -414,7 +414,7 @@ spls.hybrid <-function(X,
     }
     result$coeff=list(means.X=means.X,sigma.X=sigma.X,means.Y=means.Y,sigma.Y=sigma.Y)
     
-    class(result) = c("spls.hybrid","pls")
+    class(result) = c("pls","spls.hybrid")
     return(invisible(result))
 }# end function
 

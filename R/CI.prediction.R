@@ -18,16 +18,16 @@
 # Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 
-# fit the constraint spls model and record the prediction on many random subsampling with a set of variables (keepX.constraint)
+# fit the constraint spls model and record the prediction on many random subsampling with a set of variables (signature)
 
 
-CI.prediction=function(object,X,Y,keepX.constraint,ncomp,many,subsampling.matrix,ratio,X.test,level.CI,save.file)
+CI.prediction=function(object,X,Y,signature,ncomp,many,subsampling.matrix,ratio,X.test,level.CI,save.file)
 {
-    #object: spls.constraint object, from fit.model. If `object' is given, X,Y,keepX.constraint,ncomp are not used
+    #object: spls.constraint object, from fit.model. If `object' is given, X,Y,signature,ncomp are not used
 
     # X input
     # Y factor input
-    # keepX.constraint= the signature, a list of genes of length ncomp or their position in the matrix X
+    # signature= the signature, a list of genes of length ncomp or their position in the matrix X
     # many= #number of resampling. On each subsmapling is performed the bootstrap sPLS-DA (with CV to choose the parameters)
     # save.file= name of the file to save
 
@@ -43,16 +43,16 @@ CI.prediction=function(object,X,Y,keepX.constraint,ncomp,many,subsampling.matrix
         X=check$X
         Y=check$Y
         
-        if(missing(keepX.constraint)) stop("missing keepX.constraint")
-        if(missing(ncomp)) ncomp=length(keepX.constraint)
-        if(ncomp>length(keepX.constraint)) stop("The number of components has to be lower than the length of keepX.constraint")
-        if(sum(is.na(match(unlist(keepX.constraint),colnames(X))))>0)
+        if(missing(signature)) stop("missing signature")
+        if(missing(ncomp)) ncomp=length(signature)
+        if(ncomp>length(signature)) stop("The number of components has to be lower than the length of signature")
+        if(sum(is.na(match(unlist(signature),colnames(X))))>0)
         {
-            a=sum(is.na(match(unlist(keepX.constraint),colnames(X))))
-            stop(paste("keepX.constraint contains",a,"variable(s) that are missing from X"))
+            a=sum(is.na(match(unlist(signature),colnames(X))))
+            stop(paste("signature contains",a,"variable(s) that are missing from X"))
         }
         
-        if(ncomp!=length(keepX.constraint)) {keepX.constraint.temp=keepX.constraint; for(i in (ncomp+1):length(keepX.constraint)) keepX.constraint.temp[[i]]=NULL ; keepX.constraint=keepX.constraint.temp}
+        if(ncomp!=length(signature)) {signature.temp=signature; for(i in (ncomp+1):length(signature)) signature.temp[[i]]=NULL ; signature=signature.temp}
         
 
         
@@ -60,12 +60,12 @@ CI.prediction=function(object,X,Y,keepX.constraint,ncomp,many,subsampling.matrix
         if(!any(class(object)=="spls.constraint")) stop("problem class of object")
         X=object$data$X
         Y=object$data$Y #factor
-        keepX.constraint=object$data$keepX.constraint
-        ncomp=length(keepX.constraint)
+        signature=object$data$signature
+        ncomp=length(signature)
     }
 
 
-    X.indice=X[,unique(unlist(keepX.constraint)),drop=FALSE] #pick the genes
+    X.indice=X[,unique(unlist(signature)),drop=FALSE] #pick the genes
     nlevelY=nlevels(Y)
 
     #construct a dummy matrix
@@ -83,7 +83,7 @@ CI.prediction=function(object,X,Y,keepX.constraint,ncomp,many,subsampling.matrix
     {make.prediction=FALSE}else{make.prediction=TRUE}
 
     #prediction of all the samples
-    out=prediction(X=X,Y=Y,keepX.constraint=keepX.constraint,ncomp=ncomp) #this removes the column without variance
+    out=prediction(X=X,Y=Y,signature=signature,ncomp=ncomp) #this removes the column without variance
     num.distance=length(out$predicted.learn) # gives the number of different distances
 
 
@@ -142,7 +142,7 @@ CI.prediction=function(object,X,Y,keepX.constraint,ncomp,many,subsampling.matrix
         data.test.signature=X[-subsampling,,drop=FALSE]
         Y.test.signature=Y[-subsampling]
         
-        out=prediction(X=data.learn.signature,Y=Y.learn.signature,keepX.constraint=keepX.constraint,ncomp=ncomp,X.test=data.test.signature) #this removes the column without variance
+        out=prediction(X=data.learn.signature,Y=Y.learn.signature,signature=signature,ncomp=ncomp,X.test=data.test.signature) #this removes the column without variance
         
         for(distance in 1:num.distance)
         {
@@ -156,17 +156,11 @@ CI.prediction=function(object,X,Y,keepX.constraint,ncomp,many,subsampling.matrix
         {
             predicted=out$predicted.test[[distance]]
             #--------record of the classification accuracy for each level of Y
-            for(i in 1:nlevelY)
-            {
-                ind.i=which(Y.test.signature==levels(Y)[i])
-                for(j in 1:nlevelY)
-                {
-                    ClassifResult[i,j,,abc,distance]=apply(predicted,2,function(x){sum(x[ind.i]==j)})
-                    
-                }
-            }
+            for(num.comp in 1:ncomp)
+            ClassifResult[,,num.comp,abc,distance]= mixOmics::get.confusion_matrix(truth = Y.test.signature, all.levels=levels(Y), predicted = predicted[,num.comp])
             
         }
+        
 
         #----------- record of the coefficients used in the prediction function
         ind.commun=match(rownames(out$object$loadings$X),rownames(loadings.X))
@@ -189,12 +183,12 @@ CI.prediction=function(object,X,Y,keepX.constraint,ncomp,many,subsampling.matrix
         #----------- record of the prediction value for the test.set
         if(make.prediction==TRUE)
         {
-            out=prediction(X=data.learn.signature,Y=Y.learn.signature,keepX.constraint=keepX.constraint,ncomp=ncomp,X.test=X.test) #need to remove somewhere the column without variance
+            out=prediction(X=data.learn.signature,Y=Y.learn.signature,signature=signature,ncomp=ncomp,X.test=X.test) #need to remove somewhere the column without variance
             predicted=out$predicted.test#$max.dist
 
             for(distance in 1:num.distance)
             {
-                prediction.X.test[,abc,,distance]=predicted[[i]]
+                prediction.X.test[,abc,,distance]=predicted[[distance]]
             }
 
             
@@ -254,7 +248,9 @@ CI.prediction=function(object,X,Y,keepX.constraint,ncomp,many,subsampling.matrix
 
         out=list(CI=CI,Y.hat.test=Y.hat.test,ClassifResult=ClassifResult,
         loadings.X=loadings.X,prediction.X=prediction.X,prediction.X.test=prediction.X.test,learning.sample=learning.sample,
-        data=list(X=X,Y=Y,keepX.constraint=keepX.constraint),coeff=list(means.X=means.X,sigma.X=sigma.X,means.Y=means.Y,sigma.Y=sigma.Y))
+        data=list(X=X,Y=Y,signature=signature),coeff=list(means.X=means.X,sigma.X=sigma.X,means.Y=means.Y,sigma.Y=sigma.Y))
+
+        class(out)="predictCI"
 
       }else{
           CI=NULL
@@ -262,18 +258,17 @@ CI.prediction=function(object,X,Y,keepX.constraint,ncomp,many,subsampling.matrix
           
           out=list(CI=CI,Y.hat.test=Y.hat.test,ClassifResult=ClassifResult,
           loadings.X=loadings.X,prediction.X=prediction.X,learning.sample=learning.sample,
-          data=list(X=X,Y=Y,keepX.constraint=keepX.constraint),coeff=list(means.X=means.X,sigma.X=sigma.X,means.Y=means.Y,sigma.Y=sigma.Y))
+          data=list(X=X,Y=Y,signature=signature),coeff=list(means.X=means.X,sigma.X=sigma.X,means.Y=means.Y,sigma.Y=sigma.Y))
 
     }
       
       if(!missing(save.file)){
           save(prediction.X,learning.sample,loadings.X,
-          ClassifResult,X,Y,keepX.constraint,means.X,sigma.X,means.Y,sigma.Y,
+          ClassifResult,X,Y,signature,means.X,sigma.X,means.Y,sigma.Y,
           CI,Y.hat.test,
           file=save.file)
       }
       
-
     out
 
 }

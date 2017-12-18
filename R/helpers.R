@@ -235,14 +235,12 @@ soft_thresholding=function(x,nx)
     #selection on a (loadings.X). modified on 19/02/15 to make sure that a!=0
     if(nx!=0)
     {
-        absx=abs(x)
-        if(sum(rank(absx)<=nx)>0)# if nx is not high enough, we don't put any coefficients to zero
-        {
-            x=ifelse(absx>absx[which(rank(absx)==max(rank(absx)[which(rank(absx)<=(nx))]))[1]],
-            (absx-absx[which(rank(absx)==max(rank(absx)[which(rank(absx)<=(nx))]))[1]])*sign(x),0)
+        absa = abs(x)
+        if(any(rank(absa, ties.method = "max") <= nx)) {
+            x = ifelse(rank(absa, ties.method = "max") <= nx, 0,
+            sign(x) * (absa - max(absa[rank(absa, ties.method = "max") <= nx])))
         }
     }
-    
     x
 }
 

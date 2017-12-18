@@ -6,7 +6,7 @@ Plot the frequency of selection of all variables for all the PLS-component.}
 \description{
 Plot the frequency of selection of all variables for all the PLS-component.}
 \usage{
-\method{plot}{bootsPLS}(x,light,pch,col,legend.position,title,...)
+\method{plot}{bootsPLS}(x,light,pch,col,legend.position,title, name.var=TRUE,...)
 }
 
 \arguments{
@@ -16,6 +16,7 @@ Plot the frequency of selection of all variables for all the PLS-component.}
 \item{col}{A vector of length ncomp (argument of \code{\link{bootsPLS}}). See \code{\link{par}} for details.}
 \item{legend.position}{Location of the legend, see \code{\link{legend}} for more details. If set to FALSE, no legend is plotted.}
 \item{title}{title of the plot}
+\item{name.var}{If TRUE, add the name of the variables in \code{x$data$X} on the x-axis. A vector of length the number of variables can be supplied for customized names.}
 \item{\dots}{not used}
 }
 
@@ -37,5 +38,6 @@ boot=bootsPLS(X=X,Y=Y,ncomp=3,many=5,kCV=5)
 
 plot(boot)
 plot(boot,light=0.3,legend.position=FALSE)
+plot(boot,light=0.3,legend.position=FALSE, name.var = paste("Gene",1:ncol(X)))
 }
 }

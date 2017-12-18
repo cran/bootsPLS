@@ -6,7 +6,7 @@ Tune the number of variables on each component}
 \description{
 Performs a testing procedure to choose the number of variable on each component}
 \usage{
-variable.selection(object,ncomp,alpha,limit)
+variable.selection(object,ncomp,alpha,limit,showProgress=TRUE)
 
 }
 
@@ -16,6 +16,7 @@ variable.selection(object,ncomp,alpha,limit)
 \item{ncomp}{How many component?}
 \item{alpha}{Level of the test}
 \item{limit}{Vector of maximal number of genes to include on each component}
+\item{showProgress}{Logical. If TRUE, shows the progress of the algorithm.}
 
 }
 
@@ -29,7 +30,7 @@ The testing procedure evaluates the gain in classification accuracy over the ran
 
 \item{pval}{pvalue obtained from the testing procedure.}
 \item{opt}{Number of components chosen by the procedure}
-\item{keepX.constraint}{Variables chosen on each of the \code{ncomp} components}
+\item{signature}{Variables chosen on each of the \code{ncomp} components}
 \item{object}{input `bootsPLS' object}
 \item{alpha}{input level of the test}
 
@@ -37,7 +38,7 @@ The testing procedure evaluates the gain in classification accuracy over the ran
 }
 
 \references{
-Rohart \emph{et al.} (2015). A Molecular Classification of Human Mesenchymal Stromal Cells\cr
+Rohart \emph{et al.} (2016). A Molecular Classification of Human Mesenchymal Stromal Cells. PeerJ, DOI 10.7717/peerj.1845\cr
 }
 
 \seealso{\code{\link{spls.hybrid}}, \code{\link{plot}}, \code{\link{fit.model}}, \code{\link{prediction}}}

@@ -69,7 +69,7 @@ plot.variable.selection=function(x,pch,col,type,lty,...)
    alpha=x$alpha
    
    if(missing(pch)) pch=1:ncomp
-   if(missing(col)) col=1:ncomp
+   if(missing(col)) col=mixOmics::color.mixo(1:2)
    if(missing(lty)) lty=1:ncomp
    if(missing(type)) type="b"
    
@@ -85,7 +85,7 @@ plot.variable.selection=function(x,pch,col,type,lty,...)
        if(compi==1)
        {
            plot(frequency[compi,variables[1:limit[[compi]]][ind]],-log((pval)[ind],10),xlab=expression(bold("Stability")),ylab=expression(bold(paste("-log"[10]," (p-value)"))),
-           pch=pch[compi],type=type,lty=lty[compi],xlim=c(1,0),ylim=c(0,max(-log(unlist(x$pval),10),na.rm=TRUE)),col=col[compi],...)
+           pch=pch[compi],type=type,lty=lty[compi],xlim=c(1,0),ylim=c(0,max(-log(unlist(x$pval),10),na.rm=TRUE,-log(alpha,10))),col=col[compi],...)
 
        }else{
            

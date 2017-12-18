@@ -22,14 +22,16 @@
 
 bootsPLS=function(X,
         Y,
-        near.zero.var,
-        many,
-        ncomp,
-        method = c("max.dist", "centroids.dist", "mahalanobis.dist"),
+        near.zero.var = TRUE,
+        many = 50,
+        ncomp = 2,
+        dist = c("max.dist", "centroids.dist", "mahalanobis.dist"),
         save.file,
         ratio,
-        kCV,
+        kCV = 10,
         grid,
+        cpus,
+        nrepeat =1,
         showProgress=TRUE)
 {
     #-------------------------- bootstrapped sPLS-DA and Cross-Validation
@@ -38,19 +40,16 @@ bootsPLS=function(X,
     # near.zero.var: discard variables with near to zero variance, see function from mixOmics package
     # many= number of resampling. On each subsampling is performed the bootstrap sPLS-DA (with CV to choose the parameters)
     # ncomp= number of components
-    # method= which distance should be used to classify the samples?
+    # dist= which distance should be used to classify the samples?
     # save.file= name of the file with the results to save
     # ratio: proportion of samples left out in the first random subsampling
     # kCV: number of k-fold in the cross validation
-    # grid: CV grid, a list of length ncomp. Inside is a list of value of keepX to test in the CV
+    # grid: CV grid, a vector of values of keepX to test in the CV
+    # nrepeat: number of replication of the Mfold process, for each of many
     # showProgress=TRUE, show the progress of the iteration
     
     if(missing(X)) stop("missing X")
     if(missing(Y)) stop("missing Y")
-    if(missing(near.zero.var)) near.zero.var=TRUE
-    if(missing(many)) many=50
-    if(missing(ncomp)) ncomp=2
-    if(missing(kCV)) kCV=10
 
     check=Check.entry.bootsPLS(X,Y)
     X=check$X
@@ -60,12 +59,10 @@ bootsPLS=function(X,
     
     if(missing(grid))
     {
-        grid=list()
-        for(i in 1:ncomp)
-        grid[[i]]=1:min(40,ncol(X))
+        grid=1:min(40,ncol(X))
     }
     
-    if(missing(method)) method="max.dist"
+    dist=dist[1] #if multiple entries
     
     #construct a dummy matrix
     Y.mat=matrix(0,nrow=nrow(X),ncol=nlevelY)
@@ -75,7 +72,7 @@ bootsPLS=function(X,
     }
     colnames(Y.mat)=levels(Y)
     
-    #remove genes with nearzerovar function
+    #remove variables with nearzerovar function
     nzv=list()
     if(near.zero.var == TRUE)
     {
@@ -108,6 +105,8 @@ bootsPLS=function(X,
     #--------------------------------------------------------------------------------------------------------
     learning.sample=matrix(0,nrow=nrow(X),ncol=many) #record which sample are in the learning set
     prediction=array(0,c(nrow(X),many,ncomp)) #record the class associated to each sample (either in learning or test set)
+    rownames(learning.sample)=rownames(X)
+    dimnames(prediction)[[1]]=rownames(X)
     
     for(abc in 1:many)
     {
@@ -117,43 +116,22 @@ bootsPLS=function(X,
         #--------------- 1st step: random subsampling
         
         A=suppressWarnings(random.subsampling(Y,ratio))
+        A=sort(A) # to keep the same order as the data
         #A contains the sample we want to keep in the learning set, -A in the test set
         learning.sample[A,abc]=1
         
         data.learn.signature=X[A,]
         Y.learn.signature=Y[A]
-        Y.mat.learn.signature=Y.mat[A,]
         
         data.test.signature=X[-A,]
         Y.test.signature=Y[-A]
-        Y.mat.test.signature=Y.mat[-A,]
         
-        #we scale data and Y, the CV is done with the scaled matrices, the prediction will be done on the unscaled matrices using the means and variances
-        data.learn.scale=scale(data.learn.signature)
-        Y.mat.learn.scale=scale(Y.mat.learn.signature)
-        means.X=attr(data.learn.scale,"scaled:center")
-        sigma.X=attr(data.learn.scale,"scaled:scale")
-        means.Y=attr(Y.mat.learn.scale,"scaled:center")
-        sigma.Y=attr(Y.mat.learn.scale,"scaled:scale")
-        
-        remove=which(sigma.X==0)
-        if(length(remove)>0)
-        {
-            data.learn.scale=data.learn.scale[,-remove]
-            data.test.signature=data.test.signature[,-remove]
-            data.learn.signature=data.learn.signature[,-remove]
-            means.X=means.X[-remove]
-            sigma.X=sigma.X[-remove]
-        }
-        
-        nzv.temp=nearZeroVar(data.learn.scale)
+        #NZV
+        nzv.temp=nearZeroVar(data.learn.signature)
         if(length(nzv.temp$Position)>0)
         {
-            data.learn.scale=data.learn.scale[,-nzv.temp$Position]
-            data.test.signature=data.test.signature[,-nzv.temp$Position]
             data.learn.signature=data.learn.signature[,-nzv.temp$Position]
-            means.X=means.X[-nzv.temp$Position]
-            sigma.X=sigma.X[-nzv.temp$Position]
+            data.test.signature=data.test.signature[,-nzv.temp$Position]
         }
         
         #--------------- kCV on each component to find the optimal number of variables per component
@@ -161,103 +139,69 @@ bootsPLS=function(X,
         CH=NULL
         uloadings.X=NULL # the one of size p = ncol(X)
         ind.var=NULL
-        keepX.constraint=list()
         
-        stop=0
+
+        if(TRUE) #debug: get rid of the CV part that is time-consuming
+        {
+            #perform a Cross validation to tune the number of variables to keep on all components
+            CV = suppressWarnings(mixOmics::tune.splsda(X=data.learn.signature, Y=Y.learn.signature, ncomp=ncomp, test.keepX=grid, validation= "Mfold",
+            folds = kCV, measure="BER", dist = dist, scale=TRUE, auc=FALSE, near.zero.var=near.zero.var, cpus=cpus, progressBar=showProgress,
+            nrepeat=nrepeat))
+            
+            
+            nbr.var.opt=CV$choice.keepX
+            #if(nbr.var.opt==0){save(list=ls(),file=save.file)}
+        }else{
+            
+            ind=sample(1:ncol(data.learn.scale),3)
+            nbr.var.opt=length(ind)
+        }
+        #----------- learning the model with nbr.var.opt
+        res=suppressWarnings(mixOmics::splsda(X=data.learn.signature, Y=Y.learn.signature, keepX = nbr.var.opt, ncomp=ncomp, near.zero.var=near.zero.var, scale=TRUE))
+            
+        #record the signature for each comp
+        signature=vector("list",length=3)
         for(num.comp in 1:ncomp)
         {
-            if(showProgress)
-            cat("iteration",abc,"- comp",num.comp,"\n")
-            
-            text=paste("iteration",abc,"comp",num.comp,"\n")
-            if(TRUE) #debug: get rid of the CV part that is time-consuming
-            {
-                #perform a Cross validation to tune the number of variables to keep on component num.comp
-                CV=CV.spls.hybrid(data=data.learn.signature,Y.factor=Y.learn.signature,Y.mat=Y.mat.learn.signature,
-                k=kCV,num.comp=num.comp,keepX.constraint=keepX.constraint,grid.comp=grid[[num.comp]],
-                method=method,showProgress=showProgress) #gives number of variables on component num.comp and the threshold on the same component
-                # data: input data matrix
-                # Y.factor: factor Y
-                # Y.mat: dummy matrix constructed from Y.factor
-                # k: number of folds for the CV
-                # num.comp: which component we are tuning
-                # keepX.constraint: which variables are kept on the first num.comp-1 components
-                # grid.comp: grid of keepX that is to be tested in the CV
-                # method= which distance should be used to classify the samples?
-                # showProgress=TRUE, show the progress of the iteration
-                
-                
-                nbr.var.opt=CV$nbr.var.opt
-                #if(nbr.var.opt==0){save(list=ls(),file=save.file)}
-            }else{
-                
-                ind=sample(1:ncol(data.learn.scale),3)
-                nbr.var.opt=length(ind)
-            }
-            #----------- learning the model with nbr.var.opt
-            res=spls.hybrid(data.learn.scale,Y.mat.learn.scale,keepX.constraint=keepX.constraint,ncomp=num.comp,keepX=nbr.var.opt,near.zero.var=FALSE)
             ind=which(res$loadings$X[,num.comp]!=0)
-            names(ind)=colnames(data.learn.scale)[ind]
+            names(ind)=colnames(data.learn.signature)[ind]
             
-            keepX.constraint[[num.comp]]=names(ind)
-            
+            signature[[num.comp]]=names(ind)
+
             #record the signature
             signature.value.X=matrix(0,nrow=ncol(X),ncol=1)
             a=match(names(ind),colnames(X))
             signature.value.X[a]=res$loadings$X[ind,num.comp]
             uloadings.X=cbind(uloadings.X,signature.value.X)
             SIGN[num.comp,a]=1
-            
-            ind.var=c(ind.var,nbr.var.opt)
-            
         }# end num.comp
         
-        names(keepX.constraint)=paste("comp.",1:ncomp,sep="")
-        if(showProgress) {print(keepX.constraint)}
+        names(signature)=paste("comp.",1:ncomp,sep="")
+        if(showProgress) {print(signature)}
 
-
-        #learning the model on num.comp component with spls.constraint
-        res=spls.hybrid(data.learn.scale,Y.mat.learn.scale,keepX.constraint=keepX.constraint,ncomp=num.comp)
-        uloadings=res$loadings$X
-        tvariates=res$variates$X
-        CH=res$mat.c
-        
         
         #----------- test of the signature on the unscaled-learning.set
-        out=prediction.formula(X.test=data.learn.signature,ncomp=ncomp,Y.scaled=Y.mat.learn.scale,unmap.Y=Y.mat.learn.signature,
-        variates.X=tvariates,uloadings=uloadings,CH=CH,means.X=means.X,means.Y=means.Y,sigma.X=sigma.X,sigma.Y=sigma.Y,method=method)
+        out = predict(res, newdata = data.learn.signature, dist = dist)
+        predicted.learn = out$class[[1]]#only one dist, so one predicted class
         
-        if(method == "max.dist"){predicted.learn=out$class$max.dist}
-        if(method == "centroids.dist"){predicted.learn=out$class$centroids.dist}
-        if(method == "mahalanobis.dist"){predicted.learn=out$class$mahalanobis.dist}
         prediction[which(learning.sample[,abc]==1),abc,]=predicted.learn    # record the prediction
         
         #----------- test of the signature on the unscaled-test.set
-        out=prediction.formula(X.test=data.test.signature,ncomp=ncomp,Y.scaled=Y.mat.learn.scale,unmap.Y=Y.mat.learn.signature,
-        variates.X=tvariates,uloadings=uloadings,CH=CH,means.X=means.X,means.Y=means.Y,sigma.X=sigma.X,sigma.Y=sigma.Y,method=method)
+        out = predict(res, newdata = data.test.signature, dist = dist)
+        predicted = out$class[[1]]#only one dist, so one predicted class
         
-        if(method == "max.dist"){predicted=out$class$max.dist}
-        if(method == "centroids.dist"){predicted=out$class$centroids.dist}
-        if(method == "mahalanobis.dist"){predicted=out$class$mahalanobis.dist}
         prediction[which(learning.sample[,abc]==0),abc,]=predicted    # record the prediction
         
         
-        
+        #save(list=ls(),file="temp.Rdata")
         #--------record of the classification accuracy for each level of Y
-        for(i in 1:nlevelY)
-        {
-            ind.i=which(Y.test.signature==levels(Y)[i])
-            for(j in 1:nlevelY)
-            {
-                ClassifResult[i,j,,abc]=apply(predicted,2,function(x){sum(x[ind.i]==j)})
-                
-            }
+        for(num.comp in 1:ncomp){
+            ClassifResult[,,num.comp,abc] = mixOmics::get.confusion_matrix(truth = Y.test.signature, all.levels=levels(Y), predicted = predicted[,num.comp])
         }
-        
         selection.variable[,,abc]=SIGN
         loadings.X[,,abc]=uloadings.X
-        nbr.var=rbind(nbr.var,ind.var)
-        
+        nbr.var=rbind(nbr.var,nbr.var.opt)
+    
         #calculation of the frequency of selection for each variable, on each components, after the abc replications.
         # this is done to ensured that the file saved can be re-used.
         frequency=matrix(0,nrow=ncomp,ncol=dim(loadings.X)[1])
@@ -272,10 +216,10 @@ bootsPLS=function(X,
         colnames(frequency)=colnames(X)
         
         out=list(ClassifResult=ClassifResult,loadings.X=loadings.X,selection.variable=selection.variable,frequency=frequency,
-        nbr.var=nbr.var,learning.sample=learning.sample,prediction=prediction,data=list(X=X,Y=Y,method=method),nzv=nzv)
+        nbr.var=nbr.var,learning.sample=learning.sample,prediction=prediction,data=list(X=X,Y=Y,dist=dist),nzv=nzv)
         structure(out,class="bootsPLS")
 
-        data=list(X=X,Y=Y,method=method)
+        data=list(X=X,Y=Y,dist=dist)
         if(!missing(save.file))
         save(ClassifResult,loadings.X,selection.variable,frequency,nbr.var,learning.sample,prediction,data,nzv,file=save.file)
         

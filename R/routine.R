@@ -18,44 +18,44 @@
 # Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 
-# match keepX.constraint and X after removing variables
+# match signature and X after removing variables
 # random.subsampling(Y)
 # prediction.formula(data,H,uloadings,vloadings,CH,means.X,means.Y,sigma.X,sigma.Y)
 # pre.screening(X,coeff)
 
 
-#match.keepX.constraint
-match.keepX.constraint=function(X,names.remove,keepX.constraint)
+#match.signature
+match.signature=function(X,names.remove,signature)
 {
-    #matching the new X (after removing some variables) and keepX.constraint
+    #matching the new X (after removing some variables) and signature
     if(length(names.remove)>1)
     {
         
-        ind.match= lapply(keepX.constraint,function(x){match(x,names.remove)})
+        ind.match= lapply(signature,function(x){match(x,names.remove)})
         
         if(sum(!is.na(unlist(ind.match)))>0)
         {
-            warnings("at least one variable was removed from keepX.constraint because of a null variance. Please check object$keepX.constraint to see which variables are used.")
-            #remove from keepX.constraint
-            keepX.constraint=lapply(keepX.constraint,function(x){temp=match(x,names.remove); if(sum(!is.na(temp))>0){x=x[-which(!is.na(temp))]}else{x=x}})
+            warnings("at least one variable was removed from signature because of a null variance. Please check object$signature to see which variables are used.")
+            #remove from signature
+            signature=lapply(signature,function(x){temp=match(x,names.remove); if(sum(!is.na(temp))>0){x=x[-which(!is.na(temp))]}else{x=x}})
         }
         
-        keepX=unlist(lapply(keepX.constraint,length))
+        keepX=unlist(lapply(signature,length))
         if(any(keepX==0))
         {
             ind.min=min(which(keepX==0))
             ncomp=1:(ind.min-1)
             warnings(paste("Only", ncomp,"components are used."))
-            #construction of the new keepX.constraint, using ncomp components
-            keepX.constraint.temp=keepX.constraint
-            for(i in (ncomp+1):length(keepX.constraint)) keepX.constraint.temp[[i]]=NULL
-            keepX.constraint=keepX.constraint.temp
+            #construction of the new signature, using ncomp components
+            signature.temp=signature
+            for(i in (ncomp+1):length(signature)) signature.temp[[i]]=NULL
+            signature=signature.temp
             
         }
         
     }
     
-    out=keepX.constraint
+    out=signature
 }
 
 
@@ -67,32 +67,17 @@ random.subsampling=function(Y,ratio)
     N=length(Y)
 
     removed=floor(N*ratio)
-    N.pick=N-removed
+    N.pick=N-removed # number of samples we want as output
 
-    f=N-signif(N.pick,2) #number of samples to discard
-    keep=N-f # number of samples to keep
+    numbers=table(Y)
 
-
-    a=1-round(f/N,2) # percentage of samples to keep
-    n=N
-    n1=sum(Y==levels(Y)[1])
-    n2=sum(Y==levels(Y)[2])
-    pick1=floor(a*n1)
-    pick2=floor(a*n2)
-
-    if(pick1+pick2!=keep)
+    A=NULL
+    for(i in 1:nlevels(Y))
     {
-        a=keep-(pick1+pick2) #should be 1? or max 2? (depend on N and round)
-        if(pick1>pick2) pick1=pick1+a
-        if(pick2>pick1) pick2=pick2+a
+        ai=sample(which(Y==levels(Y)[i]),replace=FALSE,round(numbers[i]*(1-ratio))) # random sampling of the samples from level i
+        A=c(A,ai)
     }
-    #at this stage we have pick1 and pick2, number of samples to keep in each class
 
-    a=sample(which(Y==levels(Y)[1]),replace=FALSE) #stratified bootstrap in Other
-    b=sample(which(Y==levels(Y)[2]),replace=FALSE) #stratified bootstrap in MSC
-    A1=a[1:pick1]
-    A2=b[1:pick2]
-    A=sort(c(A1,A2))
 
     #A contains the sample to keep for the learning set
     out=A
@@ -130,6 +115,12 @@ prediction.formula=function(X.test,ncomp,Y.scaled,unmap.Y,variates.X,uloadings,C
         t.hat[, num.comp] = scale(X.test, center = means.X, scale = sigma.X) %*% W[, num.comp]
         B.hat[, , num.comp] = B
     }  #end h
+    
+    rownames(Y.hat) = rownames(X.test)
+    colnames(Y.hat) = colnames(unmap.Y)
+    rownames(t.hat) = rownames(X.test)
+    colnames(t.hat) = paste("dim", c(1:ncomp), sep = " ")
+    dimnames(Y.hat)[[3]]=paste("comp.",1:ncomp,sep="")
 
 #predicted=apply(Y.hat,c(1,3),which.max)
 
@@ -159,6 +150,7 @@ prediction.formula=function(X.test,ncomp,Y.scaled,unmap.Y,variates.X,uloadings,C
         }
         cls$max.dist = matrix(apply(Y.hat, 3, function.pred), ncol = ncomp)
         colnames(cls$max.dist) = paste(rep("comp", ncomp), 1:ncomp, sep = " ")
+        rownames(cls$max.dist) = rownames(Y.hat)
     }
 
     # ----    centroids distance -----------------
@@ -184,6 +176,7 @@ prediction.formula=function(X.test,ncomp,Y.scaled,unmap.Y,variates.X,uloadings,C
             cl[, h] = cl.id
         }
         colnames(cl) = paste(rep("comp", ncomp), 1:ncomp, sep = " ")
+        rownames(cl) = rownames(Y.hat)
         cls$centroids.dist = cl
     }
 
@@ -215,15 +208,12 @@ prediction.formula=function(X.test,ncomp,Y.scaled,unmap.Y,variates.X,uloadings,C
             cl[, h] = cl.id
         }
         colnames(cl) = paste(rep("comp", ncomp), 1:ncomp, sep = " ")
+        rownames(cl) = rownames(Y.hat)
         cls$mahalanobis.dist = cl
     }
+    
     #-- valeurs sortantes --#
     if (any(method == "all")) method = "all"
-    rownames(t.hat) = rownames(X.test)
-    colnames(t.hat) = paste("dim", c(1:ncomp), sep = " ")
-    rownames(Y.hat) = rownames(X.test)
-    colnames(Y.hat) = colnames(unmap.Y)
-    dimnames(Y.hat)[[3]]=paste("comp.",1:ncomp,sep="")
     colnames(G) = paste("dim", c(1:ncomp), sep = " ")
     
     out=list(Y.hat=Y.hat,t.hat=t.hat,B.hat=B.hat,centroids = G,method = method, class = cls)

@@ -1,0 +1,15 @@
+===================
+	v 1.1.1
+===================
+- remove the constraint model to match mixOmics
+- depends on the new mixOmics version (6.1.3) to gain computational speed
+- grid parameter is changed and now using the same values for each component
+- new plot function to display the confidence interval, see plot.predictCI()
+
+===================
+	v 1.0.4
+===================
+- fix subsampling bugs that did not allow more than 2 classes in Y.
+- fix bug in the prediction of the learning set when the 'newdata' input is empty. However, the bug did not happen when 'newdata' was set to the learning data, only when missing.
+- soft-thresholding function of spls.hybrid has been updated to the one from mixOmics.
+- fix a bug in compile.bootsPLS.object: 

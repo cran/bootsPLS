@@ -6,17 +6,17 @@ Compute Confidence Intervals (CI) for test samples}
 \description{
 Compute Confidence Intervals (CI) for test samples based on random subsamplings}
 \usage{
-CI.prediction(object,X,Y,keepX.constraint,ncomp,many,
+CI.prediction(object,X,Y,signature,ncomp,many,
             subsampling.matrix,ratio,X.test,level.CI,save.file)
 }
 
 \arguments{
 
-\item{object}{a `spls.constraint' object, as one resulting from \code{\link{fit.model}}. If object is missing: X, Y, keepX.constraint are needed.}
+\item{object}{a `spls.constraint' object, as one resulting from \code{\link{fit.model}}. If object is missing: X, Y, signature are needed.}
 
 \item{X}{Only used if \code{object} is missing. Input matrix of dimension n * p; each row is an observation vector.}
 \item{Y}{Only used if \code{object} is missing. Factor with at least q>2 levels.}
-\item{keepX.constraint}{Only used if \code{object} is missing. A list containing which variables are to be kept on each component.}
+\item{signature}{Only used if \code{object} is missing. A list containing which variables are to be kept on each component.}
 \item{ncomp}{Only used if \code{object} is missing. How many component do you want to include in the sPLS-DA analysis?}
 \item{many}{How many subsamplings do you want to do? Default is 100}
 \item{subsampling.matrix}{Optional matrix of \code{many} columns. Gives the samples to subsample as an internal learning set.}
@@ -31,7 +31,7 @@ CI.prediction(object,X,Y,keepX.constraint,ncomp,many,
 
 
 \details{
-This function can work with a `spls.constraint' object or with the input data (X, Y, keepX.constraint). See examples below to see the difference in use.
+This function can work with a `spls.constraint' object or with the input data (X, Y, signature). See examples below to see the difference in use.
 
 }
 
@@ -46,7 +46,7 @@ This function can work with a `spls.constraint' object or with the input data (X
 \item{prediction.X.test}{A 4-dimensional array of size nrow(X.test)*many*ncomp*3. Gives the prediction for the chosen  \code{method} of all the test samples in X.test. The last dimension is relative to the different distances "max.dist", "centroids.dist" and "mahalanobis.dist".}
 \item{learning.sample}{Matrix of size n*many. Gives the samples that have been used in the internal training set over the \code{many} replications. These samples have the value 1, the others 0. }
 \item{coeff}{A list of means.X, sigma.X, means.Y and sigma.Y. Means and variances for the variables of X and the columns of the dummy matrix obtained from Y, each row is a subsampling.}
-\item{data}{A list of the input data X, Y and of keepX.constraint, which is a list containing the variables kept on each component.}
+\item{data}{A list of the input data X, Y and of signature, which is a list containing the variables kept on each component.}
 
 
 }
@@ -66,19 +66,20 @@ fit=fit.model(boot,ncomp=3)
 
 CI=CI.prediction(fit)
 CI=CI.prediction(fit,X.test=X)
+plot(CI)
 
 lapply(CI$CI$'comp.1',head)
 lapply(CI$CI$'comp.2',head)
 lapply(CI$CI$'comp.3',head)
 
 
-# without a spls.constraint object. X,Y and keepX.constraint are needed
+# without a spls.constraint object. X,Y and signature are needed
 # the results should be similar
 #(not the same because of the random subsamplings,
 # exactly the same if subsampling.matrix is an input)
-keepX.constraint=fit$data$keepX.constraint
-CI=CI.prediction(X=X,Y=Y,keepX.constraint=keepX.constraint)
-CI=CI.prediction(X=X,Y=Y,keepX.constraint=keepX.constraint,X.test=X)
+signature=fit$data$signature
+CI=CI.prediction(X=X,Y=Y,signature=signature)
+CI=CI.prediction(X=X,Y=Y,signature=signature,X.test=X)
 
 lapply(CI$CI$'comp.1',head)
 lapply(CI$CI$'comp.2',head)

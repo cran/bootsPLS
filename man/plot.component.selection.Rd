@@ -21,7 +21,7 @@ Plot the results of the testing procedure to determine the number of component t
 \details{This function plots the p-value of the one sided t-test with respect to the number of components. See \code{\link{component.selection}} and the reference below for more details on the multiple testing procedure}
 
 \references{
-Rohart \emph{et al.} (2015). A Molecular Classification of Human Mesenchymal Stromal Cells\cr
+Rohart \emph{et al.} (2016). A Molecular Classification of Human Mesenchymal Stromal Cells. PeerJ, DOI 10.7717/peerj.1845\cr
 }
 
 \seealso{\code{\link{bootsPLS}}, \code{\link{component.selection}}}

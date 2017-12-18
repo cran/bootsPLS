@@ -23,7 +23,7 @@
 # pre.screening(X,coeff)
 
 # random subsamplings
-component.selection=function(object,alpha)
+component.selection=function(object,alpha, showProgress=TRUE)
 {
     # distance: "max.dist", "centroids.dist", "mahalanobis.dist"
 
@@ -55,7 +55,8 @@ component.selection=function(object,alpha)
     #if(opt.MC==1)
     #cat("opt.temp ", opt,"\n") #print the temporary optimal number of genes for MC
 
-    cat("Number of chosen components:",opt,"\n")
+    if(showProgress)
+    message("Number of chosen components: ",opt,"\n")
 
     out=list(pval=pval,opt=opt,object=object,alpha=alpha)
     structure(out,class="component.selection")
@@ -63,7 +64,7 @@ component.selection=function(object,alpha)
 }
 
 
-variable.selection=function(object,ncomp,alpha,limit)
+variable.selection=function(object,ncomp,alpha,limit, showProgress=TRUE)
 {
     #object:bootsPLS object
     #ncomp: number of optimal component
@@ -75,7 +76,7 @@ variable.selection=function(object,ncomp,alpha,limit)
     if(missing(alpha)) alpha=0.01
     if(missing(ncomp)) ncomp=ncol(object$nbr.var)
     if(missing(limit)) limit=rep(ncol(object$frequency),ncomp)-1
-    method=object$data$method
+    method=object$data$dist
     
     
     
@@ -84,11 +85,12 @@ variable.selection=function(object,ncomp,alpha,limit)
 
     #loop on the number of optimal component
     subsamplings=list()
-    pval=keepX.constraint=list()
+    pval=signature=list()
     opt=NULL
     for(compi in 1:ncomp)
     {
-        
+        if(showProgress)
+        message("Component ",compi," under progress.")
         
         variables=sort(object$frequency[compi,],decreasing=TRUE)
         dup=duplicated(variables[limit[compi]:1])[limit[compi]:1]
@@ -99,12 +101,14 @@ variable.selection=function(object,ncomp,alpha,limit)
         {
             if(!dup[j])
             {
-
-                out=CI.prediction(X=object$data$X,Y=object$data$Y,keepX.constraint=list(names(variables)[1:j]),ncomp=1)
+                if(showProgress)
+                cat("Calculating subsamplings for the top",j,"variables on component", compi,"\n")
+                
+                out=CI.prediction(X=object$data$X,Y=object$data$Y,signature=c(signature,list(names(variables)[1:j])),ncomp=compi)
                 
                 # match distance and output in out
                 ind.method=which(dimnames(out$ClassifResult)[[5]]==method)
-                subsamplings[[compi]][,j]=apply(out$ClassifResult[,,,,ind.method],3,function(x){sum(x)-sum(diag(x))})
+                subsamplings[[compi]][,j]=apply(out$ClassifResult[,,compi,,ind.method],3,function(x){sum(x)-sum(diag(x))})
             }
         }
         colnames(subsamplings[[compi]])=names(variables)[1:limit[compi]]
@@ -118,7 +122,15 @@ variable.selection=function(object,ncomp,alpha,limit)
         {
             if(!dup[j])
             {
-                pval[[compi]][j]=t.test(subsamplings[[compi]][,opt.temp],subsamplings[[compi]][,j],alternative="greater")$p.value #t.test of "is adding X genes improves the overall results"
+                temp = try(t.test(subsamplings[[compi]][,opt.temp],subsamplings[[compi]][,j],alternative="greater")$p.value, silent=T) #t.test of "is adding X genes improves the overall results"
+                if(any(class(temp) == "try-error") || is.na(temp)) # temp can be NaN when error.keepX is constant
+                {
+                    pval[[compi]][j] = 1
+                } else {
+                    pval[[compi]][j] = temp
+                }
+
+
                 if( pval[[compi]][j]< (alpha) )
                 {
                     opt.temp=j #if the p-value is lower than alpha, the optimal number of genes is updated
@@ -128,17 +140,18 @@ variable.selection=function(object,ncomp,alpha,limit)
         }
         opt[compi]=opt.temp
 
-    keepX.constraint[[compi]]=names(variables)[1:opt.temp]
+        signature[[compi]]=names(variables)[1:opt.temp]
 
-    cat("comp.",compi,"- Number of chosen variables:",opt.temp,"\n")
-
+        if(showProgress)
+        message("\nNumber of chosen variables on component ", compi,": ",opt.temp,"\n")
+    
     }
     names(opt)=paste("comp.",1:ncomp,sep="")
     names(pval)=paste("comp.",1:ncomp,sep="")
     names(subsamplings)=paste("comp.",1:ncomp,sep="")
-    names(keepX.constraint)=paste("comp.",1:ncomp,sep="")
+    names(signature)=paste("comp.",1:ncomp,sep="")
 
-    out=list(pval=pval,opt=opt,keepX.constraint=keepX.constraint,subsamplings=subsamplings,object=object,alpha=alpha)
+    out=list(pval=pval,opt=opt,signature=signature,subsamplings=subsamplings,object=object,alpha=alpha)
     structure(out,class="variable.selection")
     
 }

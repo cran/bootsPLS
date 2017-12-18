@@ -6,17 +6,17 @@ prediction}
 \description{
 prediction}
 \usage{
-prediction (object,X,Y,keepX.constraint,ncomp,X.test,CI,many,
+prediction (object,X,Y,signature,ncomp,X.test,CI,many,
                 subsampling.matrix,ratio,level.CI,save.file)
 }
 
 \arguments{
 
-\item{object}{a `spls.constraint' object, as one resulting from \code{\link{fit.model}}. If object is missing: X, Y, keepX.constraint are needed.}
+\item{object}{a `spls.constraint' object, as one resulting from \code{\link{fit.model}}. If object is missing: X, Y, signature are needed.}
 
 \item{X}{Only used if \code{object} is missing. Input matrix of dimension n * p; each row is an observation vector.}
 \item{Y}{Only used if \code{object} is missing. Factor with at least q>2 levels; Response variable of length n, indicating the sample types.}
-\item{keepX.constraint}{Only used if \code{object} is missing. A list containing which variables are to be kept on each component.}
+\item{signature}{Only used if \code{object} is missing. A list containing which variables are to be kept on each component.}
 \item{ncomp}{Only used if \code{object} is missing. How many component do you want to include in the sPLS-DA analysis?}
 \item{X.test}{Test matrix.}
 \item{CI}{logical. If TRUE, the confidence interval are calculated.}
@@ -30,7 +30,7 @@ prediction (object,X,Y,keepX.constraint,ncomp,X.test,CI,many,
 
 
 \details{
-This function can work with a \code{spls.constraint} object or with the input data (X, Y, keepX.constraint). See examples below to see the difference in use.
+This function can work with a \code{spls.constraint} object or with the input data (X, Y, signature). See examples below to see the difference in use.
 
 }
 
@@ -74,14 +74,14 @@ lapply(pred.CI$out.CI$CI$'comp.1',head)
 lapply(pred.CI$out.CI$CI$'comp.2',head)
 lapply(pred.CI$out.CI$CI$'comp.3',head)
 
-# without a spls.constraint object. X,Y and keepX.constraint are needed
+# without a spls.constraint object. X,Y and signature are needed
 # the results should be similar
 #(not the same because of the random subsamplings,
 # exactly the same if subsampling.matrix is an input)
-keepX.constraint=fit$data$keepX.constraint
-pred=prediction(X=X,Y=Y,keepX.constraint=keepX.constraint,X.test=X)
+signature=fit$data$signature
+pred=prediction(X=X,Y=Y,signature=signature,X.test=X)
 
-pred2=prediction(X=X,Y=Y,keepX.constraint=keepX.constraint,X.test=X,CI=TRUE)
+pred2=prediction(X=X,Y=Y,signature=signature,X.test=X,CI=TRUE)
 lapply(pred2$out.CI$CI$'comp.1',head)
 lapply(pred2$out.CI$CI$'comp.2',head)
 lapply(pred2$out.CI$CI$'comp.3',head)

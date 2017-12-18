@@ -25,8 +25,9 @@
 
 
 
-plot.bootsPLS=function(x,light,pch,col,legend.position,title,...)
+plot.bootsPLS=function(x,light,pch,col,legend.position,title, name.var = TRUE,...)
 {
+    #name.var is either TRUE, FALSE, or a vector of length p
     
     if(missing(x)) stop("`x' is missing")
     H=ncol(x$nbr.var)
@@ -46,9 +47,31 @@ plot.bootsPLS=function(x,light,pch,col,legend.position,title,...)
     
     ylab="Frequency"
     
-    par(mar=c(10,4,4,2)+0.1)
-    plot(ind,x$frequency[1,ind],ylab=ylab,xlab="",pch=pch[1],col=col[1],xaxt="n",ylim=c(0,1),main=title,...)
-    axis(side=1,at=1:ncol(x$data$X),labels=substr(colnames(x$data$X),1,30),las=2)
+    
+    #name.var
+    #-----
+    axis.label = FALSE
+    if(!is.logical(name.var))
+    {
+        if(length(name.var)!= (p+length(x$nzv$Position)))
+        stop("'name.var' should be a vector of length ", p+length(x$nzv$Position))
+        axis.label = TRUE
+        if(length(x$nzv$Position)>0)
+        name.var = name.var[-x$nzv$Position] #remove the variables that were removed by nzv
+    } else if (name.var){
+        name.var = substr(colnames(x$data$X),1,30)
+        axis.label = TRUE
+    }
+    
+    if(axis.label == TRUE)
+    {
+        par(mar=c(10,4,4,2)+0.1)
+        plot(ind,x$frequency[1,ind],ylab=ylab,xlab="",pch=pch[1],col=col[1],xaxt="n",ylim=c(0,1),main=title,...)
+        axis(side=1,at=1:ncol(x$data$X),labels=name.var,las=2)
+    } else {
+        plot(ind,x$frequency[1,ind],ylab=ylab,xlab="",pch=pch[1],col=col[1],ylim=c(0,1),main=title,...)
+        
+    }
     
     for(i in c(1:H,1)) points(ind,x$frequency[i,ind],col=col[i],pch=pch[i],...)
 

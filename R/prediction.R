@@ -21,17 +21,17 @@
 # perform the prediction on a learning set and a testing dataset
 
 
-prediction=function(object,X,Y,keepX.constraint,ncomp,X.test,
+prediction=function(object,X,Y,signature,ncomp,X.test,
             CI,many,subsampling.matrix,ratio,level.CI,
             save.file)
 {
     #object: bootsPLS.model object, from fit.model. If `object' is given, only X.test is used
     
-    # if object is missing, X, Y, keepX.constraint and X.test are used
+    # if object is missing, X, Y, signature and X.test are used
     
-    # X=learning data, keepX.constraint must be included in colnames(X)
+    # X=learning data, signature must be included in colnames(X)
     # Y=learning Y
-    # keepX.constraint= the signature, a list of genes of length ncomp or their position in the matrix X
+    # signature= the signature, a list of genes of length ncomp or their position in the matrix X
     # ncomp= number of components
     # X.test
     
@@ -44,17 +44,17 @@ prediction=function(object,X,Y,keepX.constraint,ncomp,X.test,
     
     if(missing(object))
     {
-        # check and fit the model with X, Y, keepX.constraint, ncomp
+        # check and fit the model with X, Y, signature, ncomp
         if(missing(X)) stop("missing X")
         if(missing(Y)) stop("missing Y")
-        if(missing(keepX.constraint)) stop("missing keepX.constraint")
-        if(missing(ncomp)) ncomp=length(keepX.constraint)
-        if(ncomp>length(keepX.constraint)) stop("The number of components has to be lower than the length of keepX.constraint")
-        if(ncomp!=length(keepX.constraint)) {keepX.constraint.temp=keepX.constraint; for(i in (ncomp+1):length(keepX.constraint)) keepX.constraint.temp[[i]]=NULL ; keepX.constraint=keepX.constraint.temp}
+        if(missing(signature)) stop("missing signature")
+        if(missing(ncomp)) ncomp=length(signature)
+        if(ncomp>length(signature)) stop("The number of components has to be lower than the length of signature")
+        if(ncomp!=length(signature)) {signature.temp=signature; for(i in (ncomp+1):length(signature)) signature.temp[[i]]=NULL ; signature=signature.temp}
    
        
         #fit the model
-        object=fit.model(X=X,Y=Y,ncomp=ncomp,keepX.constraint=keepX.constraint)# spls.constraint object
+        object=fit.model(X=X,Y=Y,ncomp=ncomp,signature=signature)# spls.constraint object
     }else{
         if(!any(class(object)=="spls.constraint")) stop("problem class of object")
     }
@@ -65,13 +65,13 @@ prediction=function(object,X,Y,keepX.constraint,ncomp,X.test,
     
     data=object$X
     Y=object$Y #factor
-    keepX.constraint=object$data$keepX.constraint
-    ncomp=length(keepX.constraint)
+    signature=object$data$signature
+    ncomp=length(signature)
     
-    #data=X[,unique(unlist(keepX.constraint)),drop=FALSE] #pick the genes
+    #data=X[,unique(unlist(signature)),drop=FALSE] #pick the genes
     
     Y.mat=object$data$Y.mat
-    Y.mat.scale=object$Y
+    Y.mat.scale=object$ind.mat
 
     if(length(object$nzv$Position)>0)
     {
@@ -93,9 +93,16 @@ prediction=function(object,X,Y,keepX.constraint,ncomp,X.test,
     CH=object$mat.c
     
     #----------- test of the signature on the unscaled-training.set
-    out=prediction.formula(X.test=data,ncomp=ncomp,Y.scaled=Y.mat.scale,unmap.Y=Y.mat,
+    #unscaling the data as it is needed in the prediction and object$X is the scaled data
+    data.unscaled=scale(data,center=FALSE,scale=1/sigma.X)
+    data.unscaled=scale(data.unscaled,center=-means.X,scale=FALSE)
+
+    out=prediction.formula(X.test=data.unscaled,ncomp=ncomp,Y.scaled=Y.mat.scale,unmap.Y=Y.mat,
     variates.X=tvariates,uloadings=uloadings,CH=CH,means.X=means.X,means.Y=means.Y,sigma.X=sigma.X,sigma.Y=sigma.Y)
     predicted.learn=out$class
+    # to have character depending on Y-levels instead of numbers
+    predicted.learn = lapply(predicted.learn, function(x){matrix(levels(object$Y)[x], nrow=nrow(x), ncol=ncol(x), dimnames=dimnames(x))})
+
     Y.hat.learn=out$Y.hat
     
     out=list(object=object,predicted.learn=predicted.learn,Y.hat.learn=Y.hat.learn)#,t.learn=t.learn)
@@ -113,11 +120,11 @@ prediction=function(object,X,Y,keepX.constraint,ncomp,X.test,
         missing.genes=sum(is.na(match.indice))
         if(sum(is.na(match.indice))>0)
         {
-            warning("Some genes are missing from the signature")
+            warning("Some variables are missing from the signature")
         }
         if(sum(is.na(match.indice))==ncol(data))
         {
-            warning("All genes are missing from the signature, prediction shouldn't be trusted")
+            warning("All variables are missing from the signature, prediction shouldn't be trusted")
         }
         
         X.test.temp=X.test.temp[,match.indice,drop=FALSE]
@@ -128,6 +135,11 @@ prediction=function(object,X,Y,keepX.constraint,ncomp,X.test,
         out.temp=prediction.formula(X.test=X.test.temp,ncomp=ncomp,Y.scaled=Y.mat.scale,unmap.Y=Y.mat,
         variates.X=tvariates,uloadings=uloadings,CH=CH,means.X=means.X,means.Y=means.Y,sigma.X=sigma.X,sigma.Y=sigma.Y)
         
+        #out = predict(res, newdata = data.learn.signature, dist = dist)
+        
+        # to have character depending on Y-levels instead of numbers
+        out.temp$class = lapply(out.temp$class, function(x){matrix(levels(object$Y)[x], nrow=nrow(x), ncol=ncol(x), dimnames=dimnames(x))})
+
         #record the result
         predicted.test=out.temp$class
         Y.hat.test=out.temp$Y.hat
@@ -142,10 +154,10 @@ prediction=function(object,X,Y,keepX.constraint,ncomp,X.test,
          
          if(CI==TRUE)
          {
-             out.CI=CI.prediction(object=object,keepX.constraint=keepX.constraint,ncomp=ncomp,many=many,subsampling.matrix=subsampling.matrix,
+             out.CI=CI.prediction(object=object,signature=signature,ncomp=ncomp,many=many,subsampling.matrix=subsampling.matrix,
              ratio=ratio,X.test=X.test,level.CI=level.CI,save.file=save.file)
              out$out.CI=out.CI
-  
+
              if(!missing(save.file)) save(object,X.test,predicted.learn,Y.hat.learn,#t.learn,
              Y.hat.test,predicted.test,out.CI,#t.pred,
              file=save.file)

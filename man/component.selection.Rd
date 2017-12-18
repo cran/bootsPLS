@@ -6,13 +6,14 @@ Tune the number of components}
 \description{
 Performs a multiple hypotheses testing procedure to choose the number of components in the splsda analysis}
 \usage{
-component.selection(object,alpha)
+component.selection(object,alpha,showProgress=TRUE)
 
 }
 
 \arguments{
 \item{object}{a `bootsPLS' object, as obtained from \code{\link{bootsPLS}}}
 \item{alpha}{Level of the test}
+\item{showProgress}{Logical. If TRUE, shows the progress of the algorithm.}
 
 }
 
@@ -31,7 +32,7 @@ component.selection(object,alpha)
 }
 
 \references{
-Rohart \emph{et al.} (2015). A Molecular Classification of Human Mesenchymal Stromal Cells\cr
+Rohart \emph{et al.} (2016). A Molecular Classification of Human Mesenchymal Stromal Cells. PeerJ, DOI 10.7717/peerj.1845\cr
 }
 
 \seealso{\code{\link{plot.component.selection}}, \code{\link{fit.model}}, \code{\link{prediction}}}

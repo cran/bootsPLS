@@ -52,7 +52,8 @@ compile.bootsPLS.object=function(bootsPLS.list,path,pattern,file,save.file)
     if((!missing(pattern))&(missing(file)))
     {
         file=list.files(pattern=pattern,path=path)
-        cat("the files used are", file, "\n")
+        cat("the files used are: \n ")
+        cat(paste(file, "\n"))
         
         if(length(file)==0) stop("no files found with the path/pattern")
         nbr.objects=length(file)
@@ -83,7 +84,12 @@ compile.bootsPLS.object=function(bootsPLS.list,path,pattern,file,save.file)
 
     for(i in 1:nbr.objects)
     {
-        print(i)
+        if(from=="file")
+        {
+            cat("file",i,":",file[i],"\n")
+        }else{
+            cat("object",i,"\n")
+        }
 
 
         # number of replications
@@ -97,16 +103,16 @@ compile.bootsPLS.object=function(bootsPLS.list,path,pattern,file,save.file)
             H=ncol(bootsPLS.list[[i]]$nbr.var)
             nlevelY=nlevels(bootsPLS.list[[i]]$data$Y)
             
-            ClassifResult=bootsPLS.list[[i]]$ClassifResult
-            loadings.X=bootsPLS.list[[i]]$loadings.X
-            selection.variable=bootsPLS.list[[i]]$selection.variable
+            ClassifResult=bootsPLS.list[[i]]$ClassifResult[,,,1:nbr.replication]
+            loadings.X=bootsPLS.list[[i]]$loadings.X[,,1:nbr.replication]
+            selection.variable=bootsPLS.list[[i]]$selection.variable[,,1:nbr.replication]
             nbr.var=bootsPLS.list[[i]]$nbr.var
-            learning.sample=bootsPLS.list[[i]]$learning.sample
-            prediction=bootsPLS.list[[i]]$prediction
+            learning.sample=bootsPLS.list[[i]]$learning.sample[,1:nbr.replication]
+            prediction=bootsPLS.list[[i]]$prediction[,1:nbr.replication,]
             X=bootsPLS.list[[i]]$data$X
             Y=bootsPLS.list[[i]]$data$Y
-            method=bootsPLS.list[[i]]$data$method
-            data=list(X=X,Y=Y,method=method)
+            dist=bootsPLS.list[[i]]$data$dist
+            data=list(X=X,Y=Y,dist=dist)
             nzv=bootsPLS.list[[i]]$nzv
             
             nbr.tot=nbr.replication
@@ -118,28 +124,28 @@ compile.bootsPLS.object=function(bootsPLS.list,path,pattern,file,save.file)
 
             ClassifResult.temp=array(0,c(nlevelY,nlevelY,H,nbr.tot+nbr.replication))
             ClassifResult.temp[,,,1:nbr.tot]=ClassifResult
-            ClassifResult.temp[,,,(nbr.tot+1):(nbr.tot+nbr.replication)]=bootsPLS.list[[i]]$ClassifResult
+            ClassifResult.temp[,,,(nbr.tot+1):(nbr.tot+nbr.replication)]=bootsPLS.list[[i]]$ClassifResult[,,,1:nbr.replication]
             ClassifResult=ClassifResult.temp
             
             loadings.X.temp=array(0,c(p,H,nbr.tot+nbr.replication))
             loadings.X.temp[,,1:nbr.tot]=loadings.X
-            loadings.X.temp[,,(nbr.tot+1):(nbr.tot+nbr.replication)]=bootsPLS.list[[i]]$loadings.X
+            loadings.X.temp[,,(nbr.tot+1):(nbr.tot+nbr.replication)]=bootsPLS.list[[i]]$loadings.X[,,1:nbr.replication]
             loadings.X=loadings.X.temp
             
             selection.variable.temp=array(0,c(H,p,nbr.tot+nbr.replication))
             selection.variable.temp[,,1:nbr.tot]=selection.variable
-            selection.variable.temp[,,(nbr.tot+1):(nbr.tot+nbr.replication)]=bootsPLS.list[[i]]$selection.variable
+            selection.variable.temp[,,(nbr.tot+1):(nbr.tot+nbr.replication)]=bootsPLS.list[[i]]$selection.variable[,,1:nbr.replication]
             selection.variable=selection.variable.temp
             
             
             learning.sample.temp=matrix(0,nrow=n,ncol=nbr.tot+nbr.replication) #record which sample are in the learning set
             learning.sample.temp[,1:nbr.tot]=learning.sample
-            learning.sample.temp[,(nbr.tot+1):(nbr.tot+nbr.replication)]=bootsPLS.list[[i]]$learning.sample
+            learning.sample.temp[,(nbr.tot+1):(nbr.tot+nbr.replication)]=bootsPLS.list[[i]]$learning.sample[,1:nbr.replication]
             learning.sample=learning.sample.temp
             
             prediction.temp=array(0,c(n,nbr.tot+nbr.replication,H)) #record the class associated to each sample (either in learning or test set)
             prediction.temp[,1:nbr.tot,]=prediction
-            prediction.temp[,(nbr.tot+1):(nbr.tot+nbr.replication),]=bootsPLS.list[[i]]$prediction
+            prediction.temp[,(nbr.tot+1):(nbr.tot+nbr.replication),]=bootsPLS.list[[i]]$prediction[,1:nbr.replication,]
             prediction=prediction.temp
             
             nbr.tot=nbr.tot+nbr.replication
