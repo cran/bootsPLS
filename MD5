@@ -1,4 +1,4 @@
-0f91a39659567e86c5dadd1d7896ecdd *DESCRIPTION
+dcb49e84e93787e6af85d3115e52dc27 *DESCRIPTION
 4aa2a9a69a6aae273e5db2b3fb8beabc *NAMESPACE
 9e9083b1905a445827e445fc3815ed8a *NEWS
 bea98c45b0a1ea2324ae39d1785123d8 *R/CI.prediction.R
@@ -14,10 +14,11 @@ c521dde3096da1f2edc381efb1247478 *R/plot.selection.comp.variable.R
 baed696daa825d2aa8dd2c416fdbb5c0 *R/selection.R
 8fd21db9fd40cce8e50f26175410fde0 *R/spls.hybrid.R
 90f5c87455e24d9b438891d57d13fb0c *R/zzz.R
+ccdf8e3fa49af225051a1e29bfb0c33a *build/partial.rdb
 8f5346da17f837b9abba66b9041b4c44 *data/MSC.rda
 b1dca9d643b4efc5cb322861c2a7089f *man/CI.prediction.Rd
 168969e07685fa4ac1a6191ddf2f955b *man/MSC.Rd
-031911181459f89f4a655ecaad981835 *man/bootsPLS-package.Rd
+6bc26f0901a0633bb8cfc85bac2ccaf4 *man/bootsPLS-package.Rd
 21606ee5a030b30a7564a5aa640c32af *man/bootsPLS.Rd
 1de1225f900fce0152c728587e44de32 *man/compile.bootsPLS.object.Rd
 861c0e6a4e4755a7f07f9c6fa2f78266 *man/component.selection.Rd

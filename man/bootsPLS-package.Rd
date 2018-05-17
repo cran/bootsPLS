@@ -1,44 +1,35 @@
 \name{bootsPLS-package}
 \alias{bootsPLS-package}
+\alias{try}
 \docType{package}
 \title{
-bootsPLS: bootstrap subsamplings of sPLS-DA for classification and signature identification.}
+\packageTitle{bootsPLS}
+}
 \description{
-This package helps for the discovery of new signatures by performing splsda on numerous random subsamplings; it provides tools to select only the most stable variables.
+\packageDescription{bootsPLS}
 }
-
 \details{
-\tabular{ll}{
-Package: \tab bootsPLS \cr
-Type: \tab Package \cr
-Version: \tab 1.0.0 \cr
-Date: \tab 20-03-2015\cr
-License: \tab GPL-3 \cr
-}
 
+The DESCRIPTION file:
+\packageDESCRIPTION{bootsPLS}
+\packageIndices{bootsPLS}
 The package implements the methodology described in Rohart \emph{et al.} (2016) for identifying genes that differentiate Mesemchymal Stromal Cells from other cell types. The method is applicable to any classification problem with more than 2 classes. It relies on bootstrap subsamplings of sPLS-DA and provides tools to select the most stable variables (defined as the ones consistently selected over the bootstrap subsamplings) and to predict the class of test samples.\cr\cr
 
 Three major functions:\cr
 *\code{\link{bootsPLS}} performs a \code{\link[mixOmics]{tune.splsda}} of the \code{mixOmics} package on several random subsamplings. It records the selected variables on each replication. The \code{\link{compile.bootsPLS.object}} function is to be used if several calls to \code{\link{bootsPLS}} are made.  \cr
 *\code{\link{fit.model}} fits a constraint spls (see \code{\link{spls.hybrid}}) on the most stable variables. The variables can be automatically selected by setting auto.tune=TRUE.\cr
 *\code{\link{prediction}} predicts the class of test samples and compute Confidence Interval (CI) of the prediction values. \cr
-
 }
-
-
 \author{
-Florian Rohart [aut,cre] \cr
-Maintainer: florian.rohart@gmail.com
+\packageAuthor{bootsPLS}
+
+Maintainer: \packageMaintainer{bootsPLS}
 }
-
-
 \references{
 
 Rohart \emph{et al.} (2016). A Molecular Classification of Human Mesenchymal Stromal Cells. PeerJ, DOI 10.7717/peerj.1845\cr
 Le Cao, K.-A., Boitard, S. and Besse, P. (2011). Sparse PLS Discriminant Analysis: biologically relevant feature selection and graphical displays for multiclass problems. \emph{BMC Bioinformatics} \bold{12}:253.
-
 }
-
 
 \examples{
 \dontrun{
